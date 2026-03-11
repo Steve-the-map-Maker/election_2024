@@ -1,0 +1,670 @@
+/* ═══════════════════════════════════════════════════════════════
+   Portland 2024 Election Dashboard — React Styles
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ────────────────────────────────────────────── */
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242836;
+  --border: #2e3346;
+  --text: #e4e6ef;
+  --text-dim: #8b8fa3;
+  --accent: #6c72cb;
+  --accent2: #4cc9f0;
+  --win: #2ecc71;
+  --red: #e74c3c;
+  --gold: #f1c40f;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+.header {
+  background: linear-gradient(135deg, #1a1d27 0%, #242836 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header .subtitle {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 0.25rem;
+}
+
+/* ── Layout ───────────────────────────────────────────────────── */
+.dashboard {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Summary Cards ────────────────────────────────────────────── */
+.summary-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.summary-card:hover,
+.summary-card.active {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(108, 114, 203, 0.15);
+}
+
+.summary-card:hover::before,
+.summary-card.active::before {
+  opacity: 1;
+}
+
+.summary-card .race-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent2);
+  margin-bottom: 0.5rem;
+}
+
+.summary-card .winners {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.summary-card .winners .winner-name {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.1rem;
+}
+
+.summary-card .winners .check {
+  color: var(--win);
+  font-size: 0.7rem;
+}
+
+.summary-card .meta {
+  margin-top: 0.5rem;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+/* ── Panels ───────────────────────────────────────────────────── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: visible;
+}
+
+/* Keep border-radius clipping on panels that don't have maps */
+.panel>.chart-container,
+.panel>.first-round-chart,
+.panel>.round-table-wrap {
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-header h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.panel-body {
+  padding: 0;
+}
+
+/* ── Map ──────────────────────────────────────────────────────── */
+.map-controls {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.map-mode-toggle {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.map-ctrl-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 0.25rem;
+}
+
+.map-btn {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.map-btn:hover {
+  border-color: var(--accent);
+}
+
+.map-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Map legend overlay */
+.map-legend-react {
+  z-index: 1000;
+}
+
+.legend {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  color: var(--text) !important;
+  font-size: 0.72rem !important;
+  line-height: 1.6 !important;
+}
+
+.legend-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  color: var(--accent2);
+}
+
+/* ── Charts ───────────────────────────────────────────────────── */
+.chart-container {
+  padding: 1rem 1.25rem;
+  height: 500px;
+  position: relative;
+}
+
+.first-round-chart {
+  padding: 1rem 1.25rem;
+  height: 420px;
+  position: relative;
+}
+
+/* ── Standings Table ──────────────────────────────────────────── */
+.race-detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.round-table-wrap {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 0 1.25rem 1rem;
+}
+
+.round-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.round-table th {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 2px solid var(--border);
+  font-weight: 600;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+.round-table td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.round-table tr:hover td {
+  background: var(--surface2);
+}
+
+.round-table .winner-row td {
+  color: var(--win);
+  font-weight: 600;
+}
+
+.bar-cell {
+  position: relative;
+}
+
+.bar-bg {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 3px;
+  opacity: 0.2;
+}
+
+.bar-val {
+  position: relative;
+  z-index: 1;
+}
+
+/* Status badges */
+.status-eliminated {
+  color: var(--red);
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.status-elected {
+  color: var(--win);
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.status-winner {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+
+.status-active {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+}
+
+/* ── Leaflet Popup Overrides ──────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--surface) !important;
+}
+
+.precinct-tooltip {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 0.75rem !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+.precinct-tooltip::before {
+  border-top-color: var(--border) !important;
+}
+
+.popup-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  margin-bottom: 0.4rem;
+  color: var(--accent2);
+}
+
+.popup-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding: 0.15rem 0;
+  gap: 1rem;
+}
+
+.popup-row.leader {
+  font-weight: 700;
+  color: var(--win);
+}
+
+/* ── Round Slider ─────────────────────────────────────────────── */
+.slider-wrap {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.slider-wrap label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.slider-wrap input[type="range"] {
+  width: 100%;
+  margin-top: 0.35rem;
+  accent-color: var(--accent);
+}
+
+.round-indicator {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent2);
+  margin-top: 0.25rem;
+}
+
+/* ── Vote Transfer Timeline ───────────────────────────────────── */
+.sankey-panel {
+  width: 100%;
+}
+
+.sankey-panel .panel-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.transfers-timeline {
+  max-height: 600px;
+  overflow-y: auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Transfer card */
+.transfer-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.transfer-card:hover {
+  border-color: var(--accent);
+}
+
+.transfer-card.expanded {
+  border-color: var(--accent);
+  background: rgba(108, 114, 203, 0.06);
+}
+
+.transfer-card.transfer-elected {
+  border-color: var(--win);
+  background: rgba(46, 204, 113, 0.08);
+  cursor: default;
+}
+
+/* Transfer header row */
+.transfer-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.round-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--surface);
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.round-elected {
+  background: rgba(46, 204, 113, 0.15);
+  color: var(--win);
+}
+
+.elim-icon {
+  color: var(--red);
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.elected-icon {
+  color: var(--win);
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.transfer-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.elected-name {
+  color: var(--win);
+}
+
+.transfer-votes {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-left: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.expand-arrow {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+/* Stacked bar */
+.transfer-bar-wrap {
+  margin-top: 0.4rem;
+}
+
+.transfer-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 4px;
+  overflow: hidden;
+  gap: 1px;
+}
+
+.transfer-segment {
+  min-width: 2px;
+  transition: opacity 0.15s;
+}
+
+.transfer-segment:hover {
+  opacity: 0.8;
+}
+
+/* Recipients legend under bar */
+.transfer-recipients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin-top: 0.35rem;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+.transfer-recipient {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.transfer-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.transfer-recipient-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transfer-recipient-val {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Expanded detail table */
+.transfer-detail-table {
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.5rem;
+}
+
+.transfer-detail-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.transfer-detail-table th {
+  text-align: left;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.transfer-detail-table td {
+  padding: 0.2rem 0.5rem;
+  border-bottom: 1px solid rgba(46, 51, 70, 0.5);
+}
+
+.transfer-detail-table .exhausted-row td {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+/* ── District label ───────────────────────────────────────────── */
+.district-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .summary-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .main-grid,
+  .race-detail-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .summary-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}

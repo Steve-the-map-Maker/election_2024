@@ -1,0 +1,64 @@
+{
+  "election_date": "November 5, 2024",
+  "report_date": "December 2, 2024",
+  "races": {
+    "D1": {
+      "label": "City Council District 1",
+      "total_candidates": 17,
+      "total_rounds": 17,
+      "winners": [
+        "Candace Avalos",
+        "Jamie Dunphy",
+        "Loretta Smith"
+      ],
+      "seats": 3,
+      "total_first_round_votes": 36116.0
+    },
+    "D2": {
+      "label": "City Council District 2",
+      "total_candidates": 23,
+      "total_rounds": 23,
+      "winners": [
+        "Sameer Kanal",
+        "Dan Ryan",
+        "Elana Pirtle-Guiney"
+      ],
+      "seats": 3,
+      "total_first_round_votes": 61337.0
+    },
+    "D3": {
+      "label": "City Council District 3",
+      "total_candidates": 31,
+      "total_rounds": 30,
+      "winners": [
+        "Steve Novick",
+        "Angelita Morillo",
+        "Tiffany Koyama Lane"
+      ],
+      "seats": 3,
+      "total_first_round_votes": 70657.0
+    },
+    "D4": {
+      "label": "City Council District 4",
+      "total_candidates": 31,
+      "total_rounds": 32,
+      "winners": [
+        "Olivia Clark",
+        "Mitch Green",
+        "Eric Zimmerman"
+      ],
+      "seats": 3,
+      "total_first_round_votes": 62465.0
+    },
+    "Mayor": {
+      "label": "Mayor",
+      "total_candidates": 21,
+      "total_rounds": 20,
+      "winners": [
+        "Keith Wilson"
+      ],
+      "seats": 1,
+      "total_first_round_votes": 295912.0
+    }
+  }
+}
