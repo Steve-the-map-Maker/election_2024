@@ -63,12 +63,12 @@ export function ElectionProvider({ children }) {
 
   useEffect(() => {
     Promise.all([
-      fetch('/data/rcv_results.json').then(r => r.json()),
-      fetch('/data/precinct_results.json').then(r => r.json()),
-      fetch('/data/summary.json').then(r => r.json()),
-      fetch('/data/precincts.geojson').then(r => r.json()),
-      fetch('/data/districts.geojson').then(r => r.json()),
-      fetch('/data/vote_flows.json').then(r => r.json()).catch(() => null),
+      fetch(`${import.meta.env.BASE_URL}data/rcv_results.json`).then(r => r.json()),
+      fetch(`${import.meta.env.BASE_URL}data/precinct_results.json`).then(r => r.json()),
+      fetch(`${import.meta.env.BASE_URL}data/summary.json`).then(r => r.json()),
+      fetch(`${import.meta.env.BASE_URL}data/precincts.geojson`).then(r => r.json()),
+      fetch(`${import.meta.env.BASE_URL}data/districts.geojson`).then(r => r.json()),
+      fetch(`${import.meta.env.BASE_URL}data/vote_flows.json`).then(r => r.json()).catch(() => null),
     ]).then(([rcvData, precinctResults, summary, precinctsGeo, districtsGeo, voteFlows]) => {
       let colors = {};
       for (const key of RACE_KEYS) {
