@@ -6,8 +6,8 @@ import 'leaflet/dist/leaflet.css';
 import { useElection } from '../ElectionContext';
 import { RACE_KEYS } from '../constants';
 
-const CENTER = [45.52, -122.65];
-const ZOOM = 11.5;
+const CENTER = [45.52, -122.68];
+const ZOOM = 11;
 const RACE_LABELS = { Mayor: 'Mayor', D1: 'District 1', D2: 'District 2', D3: 'District 3', D4: 'District 4' };
 const DOTS_PER_VOTE = 5;
 const DOT_RADIUS = 1.1;
@@ -65,32 +65,6 @@ function getLeaderForPrecinct(precinct, race, precinctResults, activeRound) {
   };
 }
 
-/* --- Shared popup HTML builder --- */
-function buildPopupHTML(precinct, activeRace, precinctResults, activeRound, candidateColors) {
-  const info = getLeaderForPrecinct(precinct, activeRace, precinctResults, activeRound);
-  if (!info) {
-    return `<div class="popup-title">Precinct ${precinct}</div><div class="popup-row"><span>No data available</span></div>`;
-  }
-  const raceLabel = RACE_LABELS[activeRace] || activeRace;
-  let html = `<div class="popup-title">Precinct ${precinct}</div>`;
-  html += `<div class="popup-row"><span>Race</span><span>${raceLabel}</span></div>`;
-  html += `<div class="popup-row"><span>Round</span><span>${info.display_round}</span></div>`;
-  if (info.display_round !== (activeRound || 1)) {
-    html += `<div class="popup-row"><span>Requested</span><span>R${activeRound}</span></div>`;
-  }
-  html += `<div class="popup-row"><span>Total ballots</span><span>${info.total_ballots.toLocaleString()}</span></div>`;
-  html += `<div class="popup-row"><span>Undervotes</span><span>${info.undervotes.toLocaleString()}</span></div>`;
-  html += `<hr style="border-color:var(--border);margin:4px 0;">`;
-  const sorted = Object.entries(info.candidates).sort((a, b) => b[1] - a[1]);
-  for (const [cand, votes] of sorted) {
-    if (votes === 0) continue;
-    const isLeader = cand === info.leader;
-    const dotColor = candidateColors?.[cand] || '#888';
-    html += `<div class="popup-row ${isLeader ? 'leader' : ''}"><span>${isLeader ? '★ ' : ''}<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-right:4px;vertical-align:middle;"></span>${cand}</span><span>${Math.round(votes).toLocaleString()}</span></div>`;
-  }
-  return html;
-}
-
 function randomPointsInFeature(feature, count) {
   if (!feature || count <= 0) return [];
 
@@ -137,6 +111,7 @@ function preparePrecinctDots(feature, raceData) {
 
   const points = randomPointsInFeature(feature, initialOwners.length);
 
+  // Shuffle points so candidate colors are spatially mixed.
   for (let i = points.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [points[i], points[j]] = [points[j], points[i]];
@@ -193,7 +168,36 @@ function preparePrecinctDots(feature, raceData) {
   return dots;
 }
 
-/* Precinct layer that reactively updates styles */
+function buildPopupHTML(precinct, activeRace, precinctResults, activeRound) {
+  const info = getLeaderForPrecinct(precinct, activeRace, precinctResults, activeRound);
+  if (!info) {
+    return `<div class="popup-title">Precinct ${precinct}</div><div class="popup-row"><span>No data available</span></div>`;
+  }
+  const raceLabel = RACE_LABELS[activeRace] || activeRace;
+  let html = `<div class="popup-title">Precinct ${precinct}</div>`;
+  html += `<div class="popup-row"><span>Race</span><span>${raceLabel}</span></div>`;
+  html += `<div class="popup-row"><span>Round</span><span>${info.display_round}</span></div>`;
+  if (info.display_round !== (activeRound || 1)) {
+    html += `<div class="popup-row"><span>Requested</span><span>R${activeRound}</span></div>`;
+  }
+  html += `<div class="popup-row"><span>Total ballots</span><span>${info.total_ballots.toLocaleString()}</span></div>`;
+  html += `<div class="popup-row"><span>Undervotes</span><span>${info.undervotes.toLocaleString()}</span></div>`;
+  html += `<hr style="border-color:var(--border);margin:4px 0;">`;
+  const sorted = Object.entries(info.candidates).sort((a, b) => b[1] - a[1]);
+  for (const [cand, votes] of sorted) {
+    if (votes === 0) continue;
+    const isLeader = cand === info.leader;
+    html += `<div class="popup-row ${isLeader ? 'leader' : ''}"><span>${isLeader ? '★ ' : ''}${cand}</span><span>${Math.round(votes).toLocaleString()}</span></div>`;
+  }
+  return html;
+}
+
+/* 
+  Precinct layer that reactively updates styles.
+  CRITICAL: Do not remove openPopupRef (reactive popup content) 
+  or selectedPrecinct (gold border highlight) logic. 
+  See MAP_INTERACTIONS.md for details.
+*/
 function PrecinctLayer() {
   const { state } = useElection();
   const map = useMap();
@@ -203,24 +207,23 @@ function PrecinctLayer() {
   const dotsCacheRef = useRef(new Map());
   const dotsRendererRef = useRef(null);
   const stateRef = useRef(state);
-  stateRef.current = state;
   const openPopupRef = useRef(null);
+  const [selectedPrecinct, setSelectedPrecinct] = useState(null);
+  stateRef.current = state;
 
   const { activeRace, activeRound, hiddenCandidates, mapMode,
           precinctsGeo, districtsGeo, precinctResults, candidateColors } = state;
 
+  /* --- style callback (changes every state update) --- */
   const getStyle = useCallback((feature) => {
     const precinct = feature.properties.Precinct;
     const info = getLeaderForPrecinct(precinct, activeRace, precinctResults, activeRound);
 
     if (mapMode === 'dots') {
-      return { fillColor: '#ffffff', fillOpacity: 0.05, weight: 1.5, color: '#aaa', opacity: 0.8 };
+      return { fillColor: '#ffffff', fillOpacity: 0.01, weight: 1.5, color: '#aaa', opacity: 0.8 };
     }
-    if (!info) {
+    if (!info || info.total_ballots === info.undervotes || info.leader_votes === 0) {
       return { fillColor: '#333', fillOpacity: 0.3, weight: 1.5, color: '#aaa', opacity: 0.8 };
-    }
-    if (info.total_ballots === info.undervotes || info.leader_votes === 0) {
-      return { fillColor: '#222', fillOpacity: 0.1, weight: 1, color: '#555', opacity: 0.4, dashArray: '3 3' };
     }
     if (hiddenCandidates.has(info.leader)) {
       return { fillColor: 'transparent', fillOpacity: 0, weight: 1.5, color: '#aaa', opacity: 0.8 };
@@ -228,9 +231,15 @@ function PrecinctLayer() {
     const color = candidateColors[info.leader] || '#888';
     const participation = (info.total_ballots - info.undervotes) / Math.max(info.total_ballots, 1);
     const opacity = 0.3 + participation * 0.5;
-    return { fillColor: color, fillOpacity: opacity, weight: 1.5, color: '#aaa', opacity: 0.8 };
-  }, [activeRace, activeRound, hiddenCandidates, mapMode, precinctResults, candidateColors]);
 
+    if (precinct === selectedPrecinct) {
+      return { fillColor: color, fillOpacity: Math.max(0.6, opacity), weight: 3, color: '#FFD700', opacity: 1 };
+    }
+
+    return { fillColor: color, fillOpacity: opacity, weight: 1.5, color: '#aaa', opacity: 0.8 };
+  }, [activeRace, activeRound, hiddenCandidates, mapMode, precinctResults, candidateColors, selectedPrecinct]);
+
+  /* --- dot helpers --- */
   const clearDots = useCallback(() => {
     if (!dotsLayerRef.current) return;
     map.removeLayer(dotsLayerRef.current);
@@ -273,12 +282,15 @@ function PrecinctLayer() {
     }
 
     dotsLayerRef.current = L.layerGroup(markers).addTo(map);
-    districtsRef.current?.bringToFront();
   }, [activeRace, activeRound, candidateColors, clearDots, hiddenCandidates, map, precinctResults, precinctsGeo]);
 
+  /* --- ONE-TIME layer + click init (stable deps only) --- */
   useEffect(() => {
     if (!precinctsGeo || !districtsGeo) return;
 
+    // Dots pane: z-index 350 = below overlayPane (400) where precinct polygons live.
+    // pointer-events:none lets clicks pass through the canvas to the precincts.
+    // This keeps precinct boundary lines visible on top and clickable.
     if (!map.getPane('dotsPane')) {
       const dotsPane = map.createPane('dotsPane');
       dotsPane.style.zIndex = '350';
@@ -286,9 +298,10 @@ function PrecinctLayer() {
     }
     dotsRendererRef.current = L.canvas({ padding: 0.3, pane: 'dotsPane' });
 
+    // Districts — visual only, non-interactive
     districtsRef.current = L.geoJSON(districtsGeo, {
       interactive: false,
-      style: { color: '#FFD700', weight: 2.5, opacity: 0.7, fillOpacity: 0, dashArray: '6 4' },
+      style: { color: '#ffffff', weight: 2.5, opacity: 0.6, fillOpacity: 0, dashArray: '6 4' },
       onEachFeature: (feature, layer) => {
         layer.bindTooltip(`District ${feature.properties.DISTRICT}`, {
           permanent: true, direction: 'center', className: 'district-label',
@@ -296,46 +309,28 @@ function PrecinctLayer() {
       },
     }).addTo(map);
 
-    const tooltipEl = document.createElement('div');
-    tooltipEl.className = 'precinct-tooltip precinct-tooltip-dom';
-    tooltipEl.style.cssText = 'position:absolute;pointer-events:none;z-index:1000;display:none;white-space:nowrap;';
-    map.getContainer().appendChild(tooltipEl);
-
-    const showTooltip = (text, e) => {
-      const pt = map.latLngToContainerPoint(e.latlng);
-      tooltipEl.textContent = text;
-      tooltipEl.style.left = `${pt.x}px`;
-      tooltipEl.style.top = `${pt.y - 30}px`;
-      tooltipEl.style.display = 'block';
-    };
-    const hideTooltip = () => { tooltipEl.style.display = 'none'; };
-
+    // Precincts — each polygon gets a popup bound directly.
+    // bindPopup makes Leaflet handle open-on-click automatically.
     layerRef.current = L.geoJSON(precinctsGeo, {
       style: { fillColor: '#333', fillOpacity: 0.3, weight: 1.5, color: '#aaa', opacity: 0.8 },
       onEachFeature: (feature, layer) => {
         const precinct = feature.properties.Precinct;
 
-        layer.bindPopup('<div class="popup-title">Loading…</div>', { maxWidth: 280 });
+        // Bind a placeholder popup — content is updated on click
+        layer.bindPopup('', { maxWidth: 280 });
 
         layer.on({
-          mouseover(e) {
-            showTooltip(`Precinct ${precinct}`, e);
-          },
-          mousemove(e) {
-            const pt = map.latLngToContainerPoint(e.latlng);
-            tooltipEl.style.left = `${pt.x}px`;
-            tooltipEl.style.top = `${pt.y - 30}px`;
-          },
-          mouseout() {
-            hideTooltip();
-          },
           click() {
             try {
               const s = stateRef.current;
-              const html = buildPopupHTML(precinct, s.activeRace, s.precinctResults, s.activeRound, s.candidateColors);
+              const html = buildPopupHTML(precinct, s.activeRace, s.precinctResults, s.activeRound);
               layer.setPopupContent(html);
               openPopupRef.current = { precinct, layer };
-              hideTooltip();
+              setSelectedPrecinct(precinct);
+              
+              setTimeout(() => {
+                if (layer.isPopupOpen()) layer.setPopupContent(html);
+              }, 10);
             } catch (err) {
               console.error('[ElectionMap] popup click error:', err);
               layer.setPopupContent(`<div class="popup-title">Precinct ${precinct}</div><div>Error loading data</div>`);
@@ -344,18 +339,14 @@ function PrecinctLayer() {
           popupclose() {
             if (openPopupRef.current?.layer === layer) {
               openPopupRef.current = null;
+              setSelectedPrecinct(null);
             }
           },
         });
       },
     }).addTo(map);
 
-    map.getContainer().addEventListener('mouseleave', hideTooltip);
-
     return () => {
-      hideTooltip();
-      tooltipEl.remove();
-      map.getContainer().removeEventListener('mouseleave', hideTooltip);
       if (dotsLayerRef.current) {
         map.removeLayer(dotsLayerRef.current);
         dotsLayerRef.current = null;
@@ -368,8 +359,10 @@ function PrecinctLayer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [precinctsGeo, districtsGeo, map]);
 
+  /* --- Reactive style + dot updates --- */
   useEffect(() => {
     if (!layerRef.current) return;
+    // Keep the stored style function current so resetStyle (mouseout) works.
     layerRef.current.options.style = getStyle;
     layerRef.current.setStyle(getStyle);
 
@@ -389,19 +382,21 @@ function PrecinctLayer() {
     const { precinct, layer } = openPopupRef.current;
     if (!layer.isPopupOpen()) {
       openPopupRef.current = null;
+      if (selectedPrecinct) setSelectedPrecinct(null);
       return;
     }
     try {
-      const html = buildPopupHTML(precinct, activeRace, precinctResults, activeRound, candidateColors);
+      const html = buildPopupHTML(precinct, activeRace, precinctResults, activeRound);
       layer.setPopupContent(html);
     } catch (err) {
       console.error('[ElectionMap] popup reactive update error:', err);
     }
-  }, [activeRace, activeRound, hiddenCandidates, precinctResults, candidateColors]);
+  }, [activeRace, activeRound, hiddenCandidates, precinctResults, selectedPrecinct]);
 
   return null;
 }
 
+/* Legend component */
 function MapLegend() {
   const { state, dispatch } = useElection();
   const race = state.rcvData?.[state.activeRace];
